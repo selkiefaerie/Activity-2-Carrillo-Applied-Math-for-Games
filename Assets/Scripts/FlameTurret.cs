@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class FlameTurret : TurretBase
 {
-    public Transform player;
-
     public LineRenderer lineRenderer;
 
     public GameObject projectilePrefab;
@@ -11,7 +9,6 @@ public class FlameTurret : TurretBase
 
     public float range = 5f;
     public float coneAngle = 45f;
-
     public float fireRate = 0.2f;
 
     private float fireTimer = 0f;
@@ -23,7 +20,7 @@ public class FlameTurret : TurretBase
 
         DrawCone();
 
-        if (IsPlayerInCone())
+        if (IsCreatureInCone())
         {
             fireTimer += Time.deltaTime;
 
@@ -39,52 +36,74 @@ public class FlameTurret : TurretBase
         }
     }
 
-    bool IsPlayerInCone()
+   bool IsCreatureInCone()
+{
+    CreatureHealth[] creatures =
+        FindObjectsByType<CreatureHealth>();
+
+    foreach (CreatureHealth creature in creatures)
     {
-        if (player == null)
-            return false;
+        if (creature == null)
+            continue;
 
-        Vector2 directionToPlayer =
-            player.position - transform.position;
+        Vector2 offset =
+            creature.transform.position - transform.position;
 
-        float distance = directionToPlayer.magnitude;
+        float distance = offset.magnitude;
 
-        if (distance > range)
-            return false;
+        if (distance <= range)
+        {
+            Vector2 directionToCreature =
+                offset.normalized;
 
-        float angle = Vector2.Angle(
-            transform.right,
-            directionToPlayer
-        );
+            float angle =
+                Vector2.Angle(
+                    transform.right,
+                    directionToCreature
+                );
 
-        return angle <= coneAngle / 2f;
+            if (angle <= coneAngle / 2f)
+            {
+                return true;
+            }
+        }
     }
+
+    return false;
+}
 
     void Shoot()
     {
         if (projectilePrefab == null || firePoint == null)
             return;
 
-
-        float randomAngle = Random.Range(
-            -coneAngle / 2f,
-            coneAngle / 2f
-        );
+        float randomAngle =
+            Random.Range(
+                -coneAngle / 2f,
+                coneAngle / 2f
+            );
 
         Vector2 direction =
-            Quaternion.Euler(0f, 0f, randomAngle)
-            * transform.right;
+            Quaternion.Euler(
+                0f,
+                0f,
+                randomAngle
+            ) * transform.right;
 
-        GameObject projectile = Instantiate(
-            projectilePrefab,
-            firePoint.position,
-            Quaternion.identity
-        );
+        GameObject projectile =
+            Instantiate(
+                projectilePrefab,
+                firePoint.position,
+                Quaternion.identity
+            );
 
         TurretProjectile projectileScript =
             projectile.GetComponent<TurretProjectile>();
 
-        projectileScript.Setup(direction, player);
+        if (projectileScript != null)
+        {
+            projectileScript.Setup(direction);
+        }
     }
 
     void DrawCone()
@@ -94,7 +113,8 @@ public class FlameTurret : TurretBase
 
         int points = 30;
 
-        lineRenderer.positionCount = points + 2;
+        lineRenderer.positionCount =
+            points + 3;
 
         lineRenderer.SetPosition(
             0,
@@ -108,20 +128,21 @@ public class FlameTurret : TurretBase
                 (coneAngle / points) * i;
 
             Vector2 direction =
-                Quaternion.Euler(0f, 0f, angle)
-                * transform.right;
+                Quaternion.Euler(
+                    0f,
+                    0f,
+                    angle
+                ) * transform.right;
 
             Vector2 point =
-                (Vector2)transform.position
-                + direction * range;
+                (Vector2)transform.position +
+                direction * range;
 
             lineRenderer.SetPosition(
                 i + 1,
                 point
             );
         }
-
-        lineRenderer.positionCount = points + 3;
 
         lineRenderer.SetPosition(
             points + 2,

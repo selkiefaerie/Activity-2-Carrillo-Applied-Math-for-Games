@@ -7,12 +7,10 @@ public class TurretProjectile : MonoBehaviour
     public float hitDistance = 0.4f;
 
     private Vector2 direction;
-    private Transform player;
 
-    public void Setup(Vector2 newDirection, Transform target)
+    public void Setup(Vector2 newDirection)
     {
         direction = newDirection.normalized;
-        player = target;
     }
 
     void Start()
@@ -22,19 +20,30 @@ public class TurretProjectile : MonoBehaviour
 
     void Update()
     {
+        // Move projectile manually
         transform.position += (Vector3)(direction * speed * Time.deltaTime);
 
-        if (player == null)
-            return;
-
-        float distance = Vector2.Distance(
-            transform.position,
-            player.position
+        // Find creatures
+        CreatureHealth[] creatures = FindObjectsByType<CreatureHealth>(
+            FindObjectsSortMode.None
         );
 
-        if (distance <= hitDistance)
+        foreach (CreatureHealth creature in creatures)
         {
-            LevelManager.Instance.PlayerHit();
+            if (creature == null)
+                continue;
+
+            float distance = Vector2.Distance(
+                transform.position,
+                creature.transform.position
+            );
+
+            if (distance <= hitDistance)
+            {
+                creature.TakeDamage(1);
+                Destroy(gameObject);
+                return;
+            }
         }
     }
 }

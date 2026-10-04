@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class SniperTurret : TurretBase
 {
-    public Transform player;
-
     public LineRenderer lineRenderer;
 
     public GameObject projectilePrefab;
@@ -12,7 +10,7 @@ public class SniperTurret : TurretBase
     public float range = 7f;
     public float sightWidth = 0.5f;
 
-    private bool playerWasInSight = false;
+    private bool creatureWasInSight = false;
 
     void Update()
     {
@@ -21,51 +19,54 @@ public class SniperTurret : TurretBase
 
         DrawSightLine();
 
-        bool playerInSight = IsPlayerInSight();
+        bool creatureInSight = IsCreatureInSight();
 
-        if (playerInSight && !playerWasInSight)
+        if (creatureInSight && !creatureWasInSight)
         {
             Shoot();
         }
 
-        playerWasInSight = playerInSight;
+        creatureWasInSight = creatureInSight;
     }
 
-    bool IsPlayerInSight()
+    bool IsCreatureInSight()
     {
-        if (player == null)
-            return false;
+        CreatureHealth[] creatures = FindObjectsByType<CreatureHealth>();
 
-        Vector2 start = transform.position;
+        foreach (CreatureHealth creature in creatures)
+        {
+            if (creature == null)
+                continue;
 
-        Vector2 forward = transform.right.normalized;
+            Vector2 start = transform.position;
+            Vector2 forward = transform.right.normalized;
+            Vector2 creaturePosition = creature.transform.position;
 
-        Vector2 playerPosition = player.position;
+            Vector2 toCreature = creaturePosition - start;
 
-        Vector2 toPlayer = playerPosition - start;
+            float distanceAlongLine =
+                Vector2.Dot(toCreature, forward);
 
-        float distanceAlongLine =
-            Vector2.Dot(toPlayer, forward);
+            if (distanceAlongLine < 0)
+                continue;
 
-        // Player is behind the turret
-        if (distanceAlongLine < 0)
-            return false;
+            if (distanceAlongLine > range)
+                continue;
 
-        // Player is outside the sight range
-        if (distanceAlongLine > range)
-            return false;
+            Vector2 closestPoint =
+                start + forward * distanceAlongLine;
 
-        // Find how far the player is from the sight line
-        Vector2 closestPoint =
-            start + forward * distanceAlongLine;
+            float distanceFromLine =
+                Vector2.Distance(
+                    creaturePosition,
+                    closestPoint
+                );
 
-        float distanceFromLine =
-            Vector2.Distance(
-                playerPosition,
-                closestPoint
-            );
+            if (distanceFromLine <= sightWidth)
+                return true;
+        }
 
-        return distanceFromLine <= sightWidth;
+        return false;
     }
 
     void Shoot()
@@ -73,7 +74,6 @@ public class SniperTurret : TurretBase
         if (projectilePrefab == null || firePoint == null)
             return;
 
-        // Shoot in the exact same direction as the sight line
         Vector2 direction = transform.right.normalized;
 
         GameObject projectile = Instantiate(
@@ -85,10 +85,10 @@ public class SniperTurret : TurretBase
         TurretProjectile projectileScript =
             projectile.GetComponent<TurretProjectile>();
 
-        projectileScript.Setup(
-            direction,
-            player
-        );
+        if (projectileScript != null)
+        {
+            projectileScript.Setup(direction);
+        }
     }
 
     void DrawSightLine()
@@ -103,14 +103,7 @@ public class SniperTurret : TurretBase
         Vector2 end =
             start + (Vector2)transform.right * range;
 
-        lineRenderer.SetPosition(
-            0,
-            start
-        );
-
-        lineRenderer.SetPosition(
-            1,
-            end
-        );
+        lineRenderer.SetPosition(0, start);
+        lineRenderer.SetPosition(1, end);
     }
 }

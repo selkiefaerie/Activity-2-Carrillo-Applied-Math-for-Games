@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class ShotgunTurret : TurretBase
 {
-    public Transform player;
-
     public LineRenderer lineRenderer;
 
     public GameObject projectilePrefab;
@@ -14,7 +12,8 @@ public class ShotgunTurret : TurretBase
     public int bulletCount = 5;
     public float spreadAngle = 60f;
 
-    private bool playerWasInRange = false;
+    private bool creatureWasInRange = false;
+    private CreatureHealth targetCreature;
 
     void Update()
     {
@@ -23,28 +22,44 @@ public class ShotgunTurret : TurretBase
 
         DrawRange();
 
-        bool playerInRange = IsPlayerInRange();
+        targetCreature = FindCreatureInRange();
 
-        if (playerInRange && !playerWasInRange)
+        bool creatureInRange = targetCreature != null;
+
+        if (creatureInRange && !creatureWasInRange)
         {
             Shoot();
         }
 
-        playerWasInRange = playerInRange;
+        creatureWasInRange = creatureInRange;
     }
 
-    bool IsPlayerInRange()
+    CreatureHealth FindCreatureInRange()
     {
-        if (player == null)
-            return false;
+        CreatureHealth[] creatures = FindObjectsByType<CreatureHealth>();
 
-        float distance =
-            Vector2.Distance(
-                transform.position,
-                player.position
-            );
+        CreatureHealth closestCreature = null;
+        float closestDistance = Mathf.Infinity;
 
-        return distance <= range;
+        foreach (CreatureHealth creature in creatures)
+        {
+            if (creature == null)
+                continue;
+
+            float distance =
+                Vector2.Distance(
+                    transform.position,
+                    creature.transform.position
+                );
+
+            if (distance <= range && distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestCreature = creature;
+            }
+        }
+
+        return closestCreature;
     }
 
     void Shoot()
@@ -52,10 +67,13 @@ public class ShotgunTurret : TurretBase
         if (projectilePrefab == null || firePoint == null)
             return;
 
-        Vector2 directionToPlayer =
-            player.position - firePoint.position;
+        if (targetCreature == null)
+            return;
 
-        directionToPlayer.Normalize();
+        Vector2 directionToCreature =
+            targetCreature.transform.position - firePoint.position;
+
+        directionToCreature.Normalize();
 
         float startAngle =
             -spreadAngle / 2f;
@@ -78,7 +96,7 @@ public class ShotgunTurret : TurretBase
                     0f,
                     0f,
                     angle
-                ) * directionToPlayer;
+                ) * directionToCreature;
 
             GameObject projectile =
                 Instantiate(
@@ -90,10 +108,10 @@ public class ShotgunTurret : TurretBase
             TurretProjectile projectileScript =
                 projectile.GetComponent<TurretProjectile>();
 
-            projectileScript.Setup(
-                direction,
-                player
-            );
+            if (projectileScript != null)
+            {
+                projectileScript.Setup(direction);
+            }
         }
     }
 
