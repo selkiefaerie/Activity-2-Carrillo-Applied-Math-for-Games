@@ -9,6 +9,11 @@ public class WaveManager : MonoBehaviour
     public int totalWaves = 10;
     public float timeBetweenWaves = 5f;
 
+    [Header("Victory Sound")]
+    public AudioClip victorySound;
+    [Range(0f, 1f)]
+    public float victoryVolume = 1f;
+
     [Header("Win Screen")]
     public GameObject winPanel;
 
@@ -83,6 +88,22 @@ public class WaveManager : MonoBehaviour
             return;
 
         waveInProgress = false;
+
+        // Play a victory toot when a wave is completed.
+        if (victorySound != null)
+        {
+            Camera mainCamera = Camera.main;
+
+            Vector3 soundPosition = mainCamera != null
+                ? mainCamera.transform.position
+                : transform.position;
+
+            AudioSource.PlayClipAtPoint(
+                victorySound,
+                soundPosition,
+                victoryVolume
+            );
+        }
 
         if (currentWave >= totalWaves)
         {

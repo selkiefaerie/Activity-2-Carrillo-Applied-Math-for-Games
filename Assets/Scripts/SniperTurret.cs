@@ -13,6 +13,11 @@ public class SniperTurret : TurretBase
     public float sightWidth = 0.5f;
     public float fireRate = 1.5f;
 
+    [Header("Sound Effects")]
+    public AudioClip shootingSound;
+    [Range(0f, 1f)]
+    public float soundVolume = 1f;
+
     private float fireTimer;
 
     void Awake()
@@ -58,24 +63,32 @@ public class SniperTurret : TurretBase
     bool IsCreatureInSight()
     {
         PathEnemy[] enemies =
-            FindObjectsByType<PathEnemy>(FindObjectsSortMode.None);
+            FindObjectsByType<PathEnemy>(
+                FindObjectsSortMode.None
+            );
 
         foreach (PathEnemy enemy in enemies)
         {
             if (enemy != null &&
                 IsTargetInSight(enemy.transform.position))
+            {
                 return true;
+            }
         }
 
-        // Compatibility with any older enemies using CreatureHealth.
+        // Compatibility with older enemies using CreatureHealth.
         CreatureHealth[] creatures =
-            FindObjectsByType<CreatureHealth>(FindObjectsSortMode.None);
+            FindObjectsByType<CreatureHealth>(
+                FindObjectsSortMode.None
+            );
 
         foreach (CreatureHealth creature in creatures)
         {
             if (creature != null &&
                 IsTargetInSight(creature.transform.position))
+            {
                 return true;
+            }
         }
 
         return false;
@@ -87,10 +100,14 @@ public class SniperTurret : TurretBase
         Vector2 forward = transform.right.normalized;
         Vector2 toTarget = targetPosition - start;
 
-        float distanceAlongLine = Vector2.Dot(toTarget, forward);
+        float distanceAlongLine =
+            Vector2.Dot(toTarget, forward);
 
-        if (distanceAlongLine < 0 || distanceAlongLine > range)
+        if (distanceAlongLine < 0 ||
+            distanceAlongLine > range)
+        {
             return false;
+        }
 
         Vector2 closestPoint =
             start + forward * distanceAlongLine;
@@ -112,6 +129,16 @@ public class SniperTurret : TurretBase
             return;
         }
 
+        // Play the firing sound.
+        if (shootingSound != null)
+        {
+            AudioSource.PlayClipAtPoint(
+                shootingSound,
+                transform.position,
+                soundVolume
+            );
+        }
+
         Vector2 direction = transform.right.normalized;
 
         GameObject projectile = Instantiate(
@@ -125,7 +152,10 @@ public class SniperTurret : TurretBase
 
         if (projectileScript != null)
         {
-            projectileScript.Setup(direction, projectileDamage);
+            projectileScript.Setup(
+                direction,
+                projectileDamage
+            );
         }
         else
         {
@@ -144,7 +174,8 @@ public class SniperTurret : TurretBase
         lineRenderer.positionCount = 2;
 
         Vector2 start = transform.position;
-        Vector2 end = start + (Vector2)transform.right * range;
+        Vector2 end =
+            start + (Vector2)transform.right * range;
 
         lineRenderer.SetPosition(0, start);
         lineRenderer.SetPosition(1, end);

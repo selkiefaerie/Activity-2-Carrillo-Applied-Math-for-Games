@@ -822,6 +822,8 @@ MonoBehaviour:
   bulletCount: 5
   spreadAngle: 60
   fireRate: 1
+  shootingSound: {fileID: 8300000, guid: 600f271844bd96549873245e55229aac, type: 3}
+  soundVolume: 1
 --- !u!58 &-1573986121297369634
 CircleCollider2D:
   m_ObjectHideFlags: 0

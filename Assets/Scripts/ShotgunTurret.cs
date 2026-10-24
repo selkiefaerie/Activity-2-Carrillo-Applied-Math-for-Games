@@ -3,13 +3,20 @@ using UnityEngine;
 
 public class ShotgunTurret : TurretBase
 {
+    [Header("Projectile")]
     public GameObject projectilePrefab;
     public Transform firePoint;
 
+    [Header("Shotgun Settings")]
     public float range = 4f;
     public int bulletCount = 5;
     public float spreadAngle = 60f;
     public float fireRate = 1f;
+
+    [Header("Sound Effects")]
+    public AudioClip shootingSound;
+    [Range(0f, 1f)]
+    public float soundVolume = 1f;
 
     private float fireTimer = 0f;
     private float baseRange;
@@ -60,7 +67,9 @@ public class ShotgunTurret : TurretBase
         float closestDistance = Mathf.Infinity;
 
         CreatureHealth[] creatures =
-            FindObjectsByType<CreatureHealth>(FindObjectsSortMode.None);
+            FindObjectsByType<CreatureHealth>(
+                FindObjectsSortMode.None
+            );
 
         foreach (CreatureHealth creature in creatures)
         {
@@ -75,7 +84,9 @@ public class ShotgunTurret : TurretBase
         }
 
         PathEnemy[] enemies =
-            FindObjectsByType<PathEnemy>(FindObjectsSortMode.None);
+            FindObjectsByType<PathEnemy>(
+                FindObjectsSortMode.None
+            );
 
         foreach (PathEnemy enemy in enemies)
         {
@@ -117,6 +128,16 @@ public class ShotgunTurret : TurretBase
 
         if (targetCreature == null)
             return;
+
+        // Play the shotgun firing sound once per shot.
+        if (shootingSound != null)
+        {
+            AudioSource.PlayClipAtPoint(
+                shootingSound,
+                transform.position,
+                soundVolume
+            );
+        }
 
         Vector2 directionToCreature =
             targetCreature.position - firePoint.position;

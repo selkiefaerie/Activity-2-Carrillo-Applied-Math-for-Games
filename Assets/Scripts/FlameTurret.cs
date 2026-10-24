@@ -3,19 +3,41 @@ using UnityEngine;
 
 public class FlameTurret : TurretBase
 {
+    [Header("Projectile")]
     public GameObject projectilePrefab;
     public Transform firePoint;
 
+    [Header("Flame Settings")]
     public float range = 5f;
     public float coneAngle = 45f;
     public float fireRate = 0.2f;
 
+    [Header("Sound Effects")]
+    public AudioClip shootingSound;
+    [Range(0f, 1f)]
+    public float soundVolume = 1f;
+    public float fadeOutDuration = 0.3f;
+
     private float fireTimer = 0f;
     private float baseFireRate;
+
+    private AudioSource flameAudioSource;
+    private float fadeTimer;
+    private bool fadingOut;
 
     void Awake()
     {
         baseFireRate = fireRate;
+
+        // Create a dedicated audio source for the flame sound.
+        flameAudioSource = gameObject.AddComponent<AudioSource>();
+        flameAudioSource.playOnAwake = false;
+        flameAudioSource.loop = true;
+        flameAudioSource.spatialBlend = 0f;
+        flameAudioSource.volume = soundVolume;
+
+        if (shootingSound != null)
+            flameAudioSource.clip = shootingSound;
     }
 
     public override void Upgrade()
@@ -34,12 +56,19 @@ public class FlameTurret : TurretBase
     void Update()
     {
         if (!turretActive)
+        {
+            StopFlameSound();
+            UpdateSoundFade();
             return;
+        }
 
         DrawCone();
 
         if (IsCreatureInCone())
         {
+            // Start or continue the flame sound.
+            StartFlameSound();
+
             fireTimer += Time.deltaTime;
 
             if (fireTimer >= fireRate)
@@ -51,13 +80,74 @@ public class FlameTurret : TurretBase
         else
         {
             fireTimer = 0f;
+            StopFlameSound();
+        }
+
+        UpdateSoundFade();
+    }
+
+    void StartFlameSound()
+    {
+        if (shootingSound == null || flameAudioSource == null)
+            return;
+
+        // Cancel any fade-out if firing resumes.
+        fadingOut = false;
+        fadeTimer = 0f;
+
+        if (flameAudioSource.clip != shootingSound)
+            flameAudioSource.clip = shootingSound;
+
+        flameAudioSource.volume = soundVolume;
+
+        // Only start playback if it isn't already playing.
+        if (!flameAudioSource.isPlaying)
+            flameAudioSource.Play();
+    }
+
+    void StopFlameSound()
+    {
+        if (flameAudioSource == null ||
+            !flameAudioSource.isPlaying ||
+            fadingOut)
+            return;
+
+        fadingOut = true;
+        fadeTimer = fadeOutDuration;
+    }
+
+    void UpdateSoundFade()
+    {
+        if (!fadingOut || flameAudioSource == null)
+            return;
+
+        if (fadeOutDuration <= 0f)
+        {
+            flameAudioSource.Stop();
+            flameAudioSource.volume = soundVolume;
+            fadingOut = false;
+            return;
+        }
+
+        fadeTimer -= Time.deltaTime;
+
+        flameAudioSource.volume =
+            soundVolume * Mathf.Clamp01(fadeTimer / fadeOutDuration);
+
+        if (fadeTimer <= 0f)
+        {
+            flameAudioSource.Stop();
+            flameAudioSource.volume = soundVolume;
+            fadingOut = false;
         }
     }
 
     bool IsCreatureInCone()
     {
         CreatureHealth[] creatures =
-            FindObjectsByType<CreatureHealth>(FindObjectsSortMode.None);
+            FindObjectsByType<CreatureHealth>(
+                FindObjectsSortMode.None
+            );
 
         foreach (CreatureHealth creature in creatures)
         {
@@ -67,7 +157,9 @@ public class FlameTurret : TurretBase
         }
 
         PathEnemy[] enemies =
-            FindObjectsByType<PathEnemy>(FindObjectsSortMode.None);
+            FindObjectsByType<PathEnemy>(
+                FindObjectsSortMode.None
+            );
 
         foreach (PathEnemy enemy in enemies)
         {
@@ -155,5 +247,11 @@ public class FlameTurret : TurretBase
             points + 2,
             transform.position
         );
+    }
+
+    void OnDisable()
+    {
+        if (flameAudioSource != null)
+            flameAudioSource.Stop();
     }
 }

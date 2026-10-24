@@ -106,3 +106,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoinPickup
   speed: 5
+  collectionSound: {fileID: 8300000, guid: 03e576b77e1f0a044a6e2e7c062615f6, type: 3}
+  soundVolume: 0.1

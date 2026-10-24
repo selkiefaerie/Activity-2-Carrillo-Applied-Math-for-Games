@@ -16,6 +16,11 @@ public class PlayerHP : MonoBehaviour
     public float ghostDelay = 0.3f;
     public float ghostSpeed = 2f;
 
+    [Header("Damage Sound")]
+    public AudioClip damageSound;
+    [Range(0f, 1f)]
+    public float damageVolume = 1f;
+
     [Header("Game Over")]
     public GameObject gameOverPanel;
 
@@ -67,7 +72,25 @@ public class PlayerHP : MonoBehaviour
         if (gameOver || damage <= 0)
             return;
 
+        int previousHP = currentHP;
+
         currentHP = Mathf.Max(0, currentHP - damage);
+
+        // Play the damage sound only when HP actually decreases.
+        if (currentHP < previousHP && damageSound != null)
+        {
+            Camera mainCamera = Camera.main;
+
+            Vector3 soundPosition = mainCamera != null
+                ? mainCamera.transform.position
+                : transform.position;
+
+            AudioSource.PlayClipAtPoint(
+                damageSound,
+                soundPosition,
+                damageVolume
+            );
+        }
 
         if (realBar != null)
         {

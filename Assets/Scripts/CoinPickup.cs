@@ -1,10 +1,18 @@
+
 using UnityEngine;
 
 public class CoinPickup : MonoBehaviour
 {
+    [Header("Coin Movement")]
     public float speed = 8f;
 
+    [Header("Collection Sound")]
+    public AudioClip collectionSound;
+    [Range(0f, 1f)]
+    public float soundVolume = 1f;
+
     private CoinManager coinManager;
+    private bool collected = false;
 
     void Start()
     {
@@ -13,7 +21,15 @@ public class CoinPickup : MonoBehaviour
 
     void Update()
     {
+        if (collected)
+            return;
+
         if (coinManager == null || coinManager.coinTarget == null)
+            return;
+
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null)
             return;
 
         Vector2 screenPosition =
@@ -23,11 +39,11 @@ public class CoinPickup : MonoBehaviour
             );
 
         Vector3 targetPosition =
-            Camera.main.ScreenToWorldPoint(
+            mainCamera.ScreenToWorldPoint(
                 new Vector3(
                     screenPosition.x,
                     screenPosition.y,
-                    -Camera.main.transform.position.z
+                    -mainCamera.transform.position.z
                 )
             );
 
@@ -45,7 +61,21 @@ public class CoinPickup : MonoBehaviour
             targetPosition
         ) < 0.1f)
         {
+            collected = true;
+
+            // Play the collection sound once.
+            if (collectionSound != null)
+            {
+                AudioSource.PlayClipAtPoint(
+                    collectionSound,
+                    mainCamera.transform.position,
+                    soundVolume
+                );
+            }
+
+            // Add the coin to the counter.
             coinManager.AddCoins(1);
+
             Destroy(gameObject);
         }
     }

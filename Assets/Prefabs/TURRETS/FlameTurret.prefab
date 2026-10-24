@@ -232,6 +232,9 @@ MonoBehaviour:
   range: 5
   coneAngle: 60
   fireRate: 0.2
+  shootingSound: {fileID: 8300000, guid: a83ccabfc803dd84db001b843c1e059a, type: 3}
+  soundVolume: 0.219
+  fadeOutDuration: 0.3
 --- !u!58 &6240778115268688962
 CircleCollider2D:
   m_ObjectHideFlags: 0
