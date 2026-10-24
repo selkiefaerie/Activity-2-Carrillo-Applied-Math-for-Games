@@ -127,4 +127,9 @@ MonoBehaviour:
   moveSpeed: 2
   maxHP: 3
   currentHP: 3
+  damageToBase: 1
+  playerHP: {fileID: 0}
+  goldReward: 1
+  coinPrefab: {fileID: 2494627302221659913, guid: 1b15bf48a6ca8784598f1b99397d5fd8, type: 3}
+  coinManager: {fileID: 0}
   spawner: {fileID: 0}

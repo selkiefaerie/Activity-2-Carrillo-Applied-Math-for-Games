@@ -12,7 +12,22 @@ public class ShotgunTurret : TurretBase
     public float fireRate = 1f;
 
     private float fireTimer = 0f;
-    private Transform targetCreature;
+    private float baseRange;
+
+    void Awake()
+    {
+        baseRange = range;
+    }
+
+    public override void Upgrade()
+    {
+        if (!CanUpgrade())
+            return;
+
+        base.Upgrade();
+
+        range = baseRange + (upgradeLevel - 1) * 1f;
+    }
 
     void Update()
     {
@@ -21,7 +36,7 @@ public class ShotgunTurret : TurretBase
 
         DrawRange();
 
-        targetCreature = FindCreatureInRange();
+        Transform targetCreature = FindCreatureInRange();
 
         if (targetCreature != null)
         {
@@ -29,7 +44,7 @@ public class ShotgunTurret : TurretBase
 
             if (fireTimer >= fireRate)
             {
-                Shoot();
+                Shoot(targetCreature);
                 fireTimer = 0f;
             }
         }
@@ -52,7 +67,11 @@ public class ShotgunTurret : TurretBase
             if (creature == null)
                 continue;
 
-            CheckTarget(creature.transform, ref closestTarget, ref closestDistance);
+            CheckTarget(
+                creature.transform,
+                ref closestTarget,
+                ref closestDistance
+            );
         }
 
         PathEnemy[] enemies =
@@ -63,7 +82,11 @@ public class ShotgunTurret : TurretBase
             if (enemy == null)
                 continue;
 
-            CheckTarget(enemy.transform, ref closestTarget, ref closestDistance);
+            CheckTarget(
+                enemy.transform,
+                ref closestTarget,
+                ref closestDistance
+            );
         }
 
         return closestTarget;
@@ -87,7 +110,7 @@ public class ShotgunTurret : TurretBase
         }
     }
 
-    void Shoot()
+    void Shoot(Transform targetCreature)
     {
         if (projectilePrefab == null || firePoint == null)
             return;
@@ -101,6 +124,7 @@ public class ShotgunTurret : TurretBase
         directionToCreature.Normalize();
 
         float startAngle = -spreadAngle / 2f;
+
         float angleStep = bulletCount > 1
             ? spreadAngle / (bulletCount - 1)
             : 0f;
@@ -146,7 +170,8 @@ public class ShotgunTurret : TurretBase
                 Mathf.Sin(angle * Mathf.Deg2Rad)
             );
 
-            Vector2 point = (Vector2)transform.position + direction * range;
+            Vector2 point =
+                (Vector2)transform.position + direction * range;
 
             lineRenderer.SetPosition(i, point);
         }

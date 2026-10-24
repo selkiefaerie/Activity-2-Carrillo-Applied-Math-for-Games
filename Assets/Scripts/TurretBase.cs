@@ -8,6 +8,7 @@ public abstract class TurretBase : MonoBehaviour
     public LineRenderer lineRenderer;
 
     public string turretName = "Turret";
+
     [TextArea]
     public string turretDescription = "A defensive tower.";
 

@@ -3,11 +3,24 @@ using UnityEngine;
 
 public class PathEnemy : MonoBehaviour
 {
+    [Header("Movement")]
     public Transform[] waypoints;
     public float moveSpeed = 2f;
+
+    [Header("Enemy Health")]
     public int maxHP = 3;
     public int currentHP = 3;
 
+    [Header("Base Damage")]
+    public int damageToBase = 1;
+    public PlayerHP playerHP;
+
+    [Header("Gold Reward")]
+    public int goldReward = 5;
+    public GameObject coinPrefab;
+    public CoinManager coinManager;
+
+    [Header("Spawner")]
     public PathEnemySpawner spawner;
 
     private int waypointIndex;
@@ -16,6 +29,12 @@ public class PathEnemy : MonoBehaviour
     void Start()
     {
         currentHP = maxHP;
+
+        if (playerHP == null)
+            playerHP = FindFirstObjectByType<PlayerHP>();
+
+        if (coinManager == null)
+            coinManager = FindFirstObjectByType<CoinManager>();
     }
 
     void Update()
@@ -34,7 +53,10 @@ public class PathEnemy : MonoBehaviour
             moveSpeed * Time.deltaTime
         );
 
-        if (Vector2.Distance(transform.position, targetWaypoint.position) < 0.05f)
+        if (Vector2.Distance(
+            transform.position,
+            targetWaypoint.position
+        ) < 0.05f)
         {
             waypointIndex++;
 
@@ -51,20 +73,55 @@ public class PathEnemy : MonoBehaviour
         currentHP -= damage;
 
         if (currentHP <= 0)
-            FinishEnemy();
+            Die();
     }
 
     void ReachBase()
     {
-        FinishEnemy();
+        if (finished)
+            return;
+
+        if (playerHP != null)
+        {
+            playerHP.TakeDamage(damageToBase);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "No PlayerHP found! Assign PlayerHP to the enemy prefab."
+            );
+        }
+
+        FinishEnemy(false);
     }
 
-    void FinishEnemy()
+    void Die()
+    {
+        FinishEnemy(true);
+    }
+
+    void FinishEnemy(bool defeated)
     {
         if (finished)
             return;
 
         finished = true;
+
+        // Only defeated enemies award gold.
+        if (defeated)
+        {
+            if (coinManager != null)
+                coinManager.AddCoins(goldReward);
+
+            if (coinPrefab != null)
+            {
+                Instantiate(
+                    coinPrefab,
+                    transform.position,
+                    Quaternion.identity
+                );
+            }
+        }
 
         if (spawner != null)
             spawner.EnemyFinished();

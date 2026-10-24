@@ -221,7 +221,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FlameTurret
   lineRenderer: {fileID: 6165742360907224292}
-  turretName: Turret
+  turretName: Flamethrower
   turretDescription: A defensive tower.
   upgradeCost: 20
   sellValue: 10

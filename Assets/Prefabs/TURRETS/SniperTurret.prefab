@@ -343,17 +343,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SniperTurret
   lineRenderer: {fileID: 783767664657723213}
-  turretName: Turret
+  turretName: Sniper
   turretDescription: A defensive tower.
   upgradeCost: 20
   sellValue: 10
   upgradeLevel: 1
   maxUpgradeLevel: 3
-  lineRenderer: {fileID: 783767664657723213}
   projectilePrefab: {fileID: 6109592897796344255, guid: ae572830fac41434fbe8f0685018be88, type: 3}
   firePoint: {fileID: 3041925490161926382}
   range: 100
   sightWidth: 0.5
+  projectileDamage: 1
 --- !u!58 &8783308327053246723
 CircleCollider2D:
   m_ObjectHideFlags: 0

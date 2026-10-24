@@ -11,6 +11,25 @@ public class FlameTurret : TurretBase
     public float fireRate = 0.2f;
 
     private float fireTimer = 0f;
+    private float baseFireRate;
+
+    void Awake()
+    {
+        baseFireRate = fireRate;
+    }
+
+    public override void Upgrade()
+    {
+        if (!CanUpgrade())
+            return;
+
+        base.Upgrade();
+
+        if (upgradeLevel == 2)
+            fireRate = baseFireRate * 0.75f;
+        else if (upgradeLevel == 3)
+            fireRate = baseFireRate * 0.5f;
+    }
 
     void Update()
     {
@@ -42,7 +61,8 @@ public class FlameTurret : TurretBase
 
         foreach (CreatureHealth creature in creatures)
         {
-            if (creature != null && IsTargetInCone(creature.transform.position))
+            if (creature != null &&
+                IsTargetInCone(creature.transform.position))
                 return true;
         }
 
@@ -51,7 +71,8 @@ public class FlameTurret : TurretBase
 
         foreach (PathEnemy enemy in enemies)
         {
-            if (enemy != null && IsTargetInCone(enemy.transform.position))
+            if (enemy != null &&
+                IsTargetInCone(enemy.transform.position))
                 return true;
         }
 
@@ -60,13 +81,16 @@ public class FlameTurret : TurretBase
 
     bool IsTargetInCone(Vector2 targetPosition)
     {
-        Vector2 offset = targetPosition - (Vector2)transform.position;
+        Vector2 offset =
+            targetPosition - (Vector2)transform.position;
+
         float distance = offset.magnitude;
 
         if (distance > range)
             return false;
 
-        float angle = Vector2.Angle(transform.right, offset.normalized);
+        float angle =
+            Vector2.Angle(transform.right, offset.normalized);
 
         return angle <= coneAngle / 2f;
     }
@@ -112,7 +136,8 @@ public class FlameTurret : TurretBase
 
         for (int i = 0; i <= points; i++)
         {
-            float angle = -coneAngle / 2f + (coneAngle / points) * i;
+            float angle =
+                -coneAngle / 2f + (coneAngle / points) * i;
 
             Vector2 direction = Quaternion.Euler(
                 0f,
@@ -120,11 +145,15 @@ public class FlameTurret : TurretBase
                 angle
             ) * transform.right;
 
-            Vector2 point = (Vector2)transform.position + direction * range;
+            Vector2 point =
+                (Vector2)transform.position + direction * range;
 
             lineRenderer.SetPosition(i + 1, point);
         }
 
-        lineRenderer.SetPosition(points + 2, transform.position);
+        lineRenderer.SetPosition(
+            points + 2,
+            transform.position
+        );
     }
 }

@@ -3,14 +3,41 @@ using UnityEngine;
 
 public class SniperTurret : TurretBase
 {
-    public LineRenderer lineRenderer;
+    [Header("Projectile")]
     public GameObject projectilePrefab;
     public Transform firePoint;
+    public int projectileDamage = 1;
 
+    [Header("Sniper Settings")]
     public float range = 7f;
     public float sightWidth = 0.5f;
+    public float fireRate = 1.5f;
 
-    private bool creatureWasInSight = false;
+    private float fireTimer;
+
+    void Awake()
+    {
+        projectileDamage = GetDamageForLevel();
+    }
+
+    void Start()
+    {
+        fireTimer = 0f;
+    }
+
+    int GetDamageForLevel()
+    {
+        return upgradeLevel;
+    }
+
+    public override void Upgrade()
+    {
+        if (!CanUpgrade())
+            return;
+
+        base.Upgrade();
+        projectileDamage = GetDamageForLevel();
+    }
 
     void Update()
     {
@@ -19,31 +46,35 @@ public class SniperTurret : TurretBase
 
         DrawSightLine();
 
-        bool creatureInSight = IsCreatureInSight();
+        fireTimer -= Time.deltaTime;
 
-        if (creatureInSight && !creatureWasInSight)
+        if (IsCreatureInSight() && fireTimer <= 0f)
+        {
             Shoot();
-
-        creatureWasInSight = creatureInSight;
+            fireTimer = fireRate;
+        }
     }
 
     bool IsCreatureInSight()
     {
-        CreatureHealth[] creatures =
-            FindObjectsByType<CreatureHealth>(FindObjectsSortMode.None);
-
-        foreach (CreatureHealth creature in creatures)
-        {
-            if (creature != null && IsTargetInSight(creature.transform.position))
-                return true;
-        }
-
         PathEnemy[] enemies =
             FindObjectsByType<PathEnemy>(FindObjectsSortMode.None);
 
         foreach (PathEnemy enemy in enemies)
         {
-            if (enemy != null && IsTargetInSight(enemy.transform.position))
+            if (enemy != null &&
+                IsTargetInSight(enemy.transform.position))
+                return true;
+        }
+
+        // Compatibility with any older enemies using CreatureHealth.
+        CreatureHealth[] creatures =
+            FindObjectsByType<CreatureHealth>(FindObjectsSortMode.None);
+
+        foreach (CreatureHealth creature in creatures)
+        {
+            if (creature != null &&
+                IsTargetInSight(creature.transform.position))
                 return true;
         }
 
@@ -61,12 +92,11 @@ public class SniperTurret : TurretBase
         if (distanceAlongLine < 0 || distanceAlongLine > range)
             return false;
 
-        Vector2 closestPoint = start + forward * distanceAlongLine;
+        Vector2 closestPoint =
+            start + forward * distanceAlongLine;
 
-        float distanceFromLine = Vector2.Distance(
-            targetPosition,
-            closestPoint
-        );
+        float distanceFromLine =
+            Vector2.Distance(targetPosition, closestPoint);
 
         return distanceFromLine <= sightWidth;
     }
@@ -74,7 +104,13 @@ public class SniperTurret : TurretBase
     void Shoot()
     {
         if (projectilePrefab == null || firePoint == null)
+        {
+            Debug.LogWarning(
+                "Sniper needs a Projectile Prefab and Fire Point!",
+                this
+            );
             return;
+        }
 
         Vector2 direction = transform.right.normalized;
 
@@ -88,7 +124,16 @@ public class SniperTurret : TurretBase
             projectile.GetComponent<TurretProjectile>();
 
         if (projectileScript != null)
-            projectileScript.Setup(direction);
+        {
+            projectileScript.Setup(direction, projectileDamage);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "Sniper projectile is missing TurretProjectile!",
+                projectile
+            );
+        }
     }
 
     void DrawSightLine()

@@ -2,6 +2,7 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Reflection;
 
 public class TurretSelectionManager : MonoBehaviour
@@ -64,9 +65,8 @@ public class TurretSelectionManager : MonoBehaviour
 
     bool EventSystemIsOverUI()
     {
-        return UnityEngine.EventSystems.EventSystem.current != null &&
-               UnityEngine.EventSystems.EventSystem.current
-                   .IsPointerOverGameObject();
+        return EventSystem.current != null &&
+               EventSystem.current.IsPointerOverGameObject();
     }
 
     void SelectTurretAtMouse()
@@ -105,10 +105,18 @@ public class TurretSelectionManager : MonoBehaviour
 
     void SelectTurret(TurretBase turret)
     {
+        if (selectedTurret != null &&
+            selectedTurret != turret)
+        {
+            selectedTurret.SetRangeVisible(false);
+        }
+
         selectedTurret = turret;
 
         if (managementPanel != null)
             managementPanel.SetActive(true);
+
+        selectedTurret.SetRangeVisible(true);
 
         RefreshPanel();
     }
@@ -154,7 +162,9 @@ public class TurretSelectionManager : MonoBehaviour
                 "\nCone Angle: " + flame.coneAngle.ToString("F0") + " degrees" +
                 "\nFire Interval: " + flame.fireRate.ToString("F2") + " sec" +
                 "\nAttack Rate: " +
-                (flame.fireRate > 0 ? (1f / flame.fireRate).ToString("F1") : "N/A") +
+                (flame.fireRate > 0
+                    ? (1f / flame.fireRate).ToString("F1")
+                    : "N/A") +
                 " attacks/sec" +
                 GetOptionalStats(selectedTurret);
         }
@@ -164,7 +174,6 @@ public class TurretSelectionManager : MonoBehaviour
             return
                 "Range: " + sniper.range.ToString("F1") +
                 "\nSight Width: " + sniper.sightWidth.ToString("F2") +
-                "\nAttack Trigger: When a target enters sight" +
                 GetOptionalStats(selectedTurret);
         }
 
@@ -261,6 +270,8 @@ public class TurretSelectionManager : MonoBehaviour
         coinManager.AddCoins(-cost);
         selectedTurret.Upgrade();
 
+        selectedTurret.SetRangeVisible(true);
+
         RefreshPanel();
     }
 
@@ -275,6 +286,7 @@ public class TurretSelectionManager : MonoBehaviour
 
         coinManager.AddCoins(refund);
 
+        selectedTurret.SetRangeVisible(false);
         Destroy(selectedTurret.gameObject);
         selectedTurret = null;
 
@@ -283,6 +295,9 @@ public class TurretSelectionManager : MonoBehaviour
 
     void ClosePanel()
     {
+        if (selectedTurret != null)
+            selectedTurret.SetRangeVisible(false);
+
         selectedTurret = null;
 
         if (managementPanel != null)

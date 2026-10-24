@@ -810,7 +810,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShotgunTurret
   lineRenderer: {fileID: 92490786325830053}
-  turretName: Turret
+  turretName: Shotgun
   turretDescription: A defensive tower.
   upgradeCost: 20
   sellValue: 10
