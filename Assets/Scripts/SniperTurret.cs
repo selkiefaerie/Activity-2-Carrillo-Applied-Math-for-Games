@@ -1,9 +1,9 @@
+
 using UnityEngine;
 
 public class SniperTurret : TurretBase
 {
     public LineRenderer lineRenderer;
-
     public GameObject projectilePrefab;
     public Transform firePoint;
 
@@ -22,51 +22,53 @@ public class SniperTurret : TurretBase
         bool creatureInSight = IsCreatureInSight();
 
         if (creatureInSight && !creatureWasInSight)
-        {
             Shoot();
-        }
 
         creatureWasInSight = creatureInSight;
     }
 
     bool IsCreatureInSight()
     {
-        CreatureHealth[] creatures = FindObjectsByType<CreatureHealth>();
+        CreatureHealth[] creatures =
+            FindObjectsByType<CreatureHealth>(FindObjectsSortMode.None);
 
         foreach (CreatureHealth creature in creatures)
         {
-            if (creature == null)
-                continue;
+            if (creature != null && IsTargetInSight(creature.transform.position))
+                return true;
+        }
 
-            Vector2 start = transform.position;
-            Vector2 forward = transform.right.normalized;
-            Vector2 creaturePosition = creature.transform.position;
+        PathEnemy[] enemies =
+            FindObjectsByType<PathEnemy>(FindObjectsSortMode.None);
 
-            Vector2 toCreature = creaturePosition - start;
-
-            float distanceAlongLine =
-                Vector2.Dot(toCreature, forward);
-
-            if (distanceAlongLine < 0)
-                continue;
-
-            if (distanceAlongLine > range)
-                continue;
-
-            Vector2 closestPoint =
-                start + forward * distanceAlongLine;
-
-            float distanceFromLine =
-                Vector2.Distance(
-                    creaturePosition,
-                    closestPoint
-                );
-
-            if (distanceFromLine <= sightWidth)
+        foreach (PathEnemy enemy in enemies)
+        {
+            if (enemy != null && IsTargetInSight(enemy.transform.position))
                 return true;
         }
 
         return false;
+    }
+
+    bool IsTargetInSight(Vector2 targetPosition)
+    {
+        Vector2 start = transform.position;
+        Vector2 forward = transform.right.normalized;
+        Vector2 toTarget = targetPosition - start;
+
+        float distanceAlongLine = Vector2.Dot(toTarget, forward);
+
+        if (distanceAlongLine < 0 || distanceAlongLine > range)
+            return false;
+
+        Vector2 closestPoint = start + forward * distanceAlongLine;
+
+        float distanceFromLine = Vector2.Distance(
+            targetPosition,
+            closestPoint
+        );
+
+        return distanceFromLine <= sightWidth;
     }
 
     void Shoot()
@@ -86,9 +88,7 @@ public class SniperTurret : TurretBase
             projectile.GetComponent<TurretProjectile>();
 
         if (projectileScript != null)
-        {
             projectileScript.Setup(direction);
-        }
     }
 
     void DrawSightLine()
@@ -99,9 +99,7 @@ public class SniperTurret : TurretBase
         lineRenderer.positionCount = 2;
 
         Vector2 start = transform.position;
-
-        Vector2 end =
-            start + (Vector2)transform.right * range;
+        Vector2 end = start + (Vector2)transform.right * range;
 
         lineRenderer.SetPosition(0, start);
         lineRenderer.SetPosition(1, end);

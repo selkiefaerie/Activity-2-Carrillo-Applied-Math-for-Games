@@ -1,9 +1,8 @@
+
 using UnityEngine;
 
 public class FlameTurret : TurretBase
 {
-    public LineRenderer lineRenderer;
-
     public GameObject projectilePrefab;
     public Transform firePoint;
 
@@ -36,74 +35,69 @@ public class FlameTurret : TurretBase
         }
     }
 
-   bool IsCreatureInCone()
-{
-    CreatureHealth[] creatures =
-        FindObjectsByType<CreatureHealth>();
-
-    foreach (CreatureHealth creature in creatures)
+    bool IsCreatureInCone()
     {
-        if (creature == null)
-            continue;
+        CreatureHealth[] creatures =
+            FindObjectsByType<CreatureHealth>(FindObjectsSortMode.None);
 
-        Vector2 offset =
-            creature.transform.position - transform.position;
-
-        float distance = offset.magnitude;
-
-        if (distance <= range)
+        foreach (CreatureHealth creature in creatures)
         {
-            Vector2 directionToCreature =
-                offset.normalized;
-
-            float angle =
-                Vector2.Angle(
-                    transform.right,
-                    directionToCreature
-                );
-
-            if (angle <= coneAngle / 2f)
-            {
+            if (creature != null && IsTargetInCone(creature.transform.position))
                 return true;
-            }
         }
+
+        PathEnemy[] enemies =
+            FindObjectsByType<PathEnemy>(FindObjectsSortMode.None);
+
+        foreach (PathEnemy enemy in enemies)
+        {
+            if (enemy != null && IsTargetInCone(enemy.transform.position))
+                return true;
+        }
+
+        return false;
     }
 
-    return false;
-}
+    bool IsTargetInCone(Vector2 targetPosition)
+    {
+        Vector2 offset = targetPosition - (Vector2)transform.position;
+        float distance = offset.magnitude;
+
+        if (distance > range)
+            return false;
+
+        float angle = Vector2.Angle(transform.right, offset.normalized);
+
+        return angle <= coneAngle / 2f;
+    }
 
     void Shoot()
     {
         if (projectilePrefab == null || firePoint == null)
             return;
 
-        float randomAngle =
-            Random.Range(
-                -coneAngle / 2f,
-                coneAngle / 2f
-            );
+        float randomAngle = Random.Range(
+            -coneAngle / 2f,
+            coneAngle / 2f
+        );
 
-        Vector2 direction =
-            Quaternion.Euler(
-                0f,
-                0f,
-                randomAngle
-            ) * transform.right;
+        Vector2 direction = Quaternion.Euler(
+            0f,
+            0f,
+            randomAngle
+        ) * transform.right;
 
-        GameObject projectile =
-            Instantiate(
-                projectilePrefab,
-                firePoint.position,
-                Quaternion.identity
-            );
+        GameObject projectile = Instantiate(
+            projectilePrefab,
+            firePoint.position,
+            Quaternion.identity
+        );
 
         TurretProjectile projectileScript =
             projectile.GetComponent<TurretProjectile>();
 
         if (projectileScript != null)
-        {
             projectileScript.Setup(direction);
-        }
     }
 
     void DrawCone()
@@ -112,41 +106,25 @@ public class FlameTurret : TurretBase
             return;
 
         int points = 30;
+        lineRenderer.positionCount = points + 3;
 
-        lineRenderer.positionCount =
-            points + 3;
-
-        lineRenderer.SetPosition(
-            0,
-            transform.position
-        );
+        lineRenderer.SetPosition(0, transform.position);
 
         for (int i = 0; i <= points; i++)
         {
-            float angle =
-                -coneAngle / 2f +
-                (coneAngle / points) * i;
+            float angle = -coneAngle / 2f + (coneAngle / points) * i;
 
-            Vector2 direction =
-                Quaternion.Euler(
-                    0f,
-                    0f,
-                    angle
-                ) * transform.right;
+            Vector2 direction = Quaternion.Euler(
+                0f,
+                0f,
+                angle
+            ) * transform.right;
 
-            Vector2 point =
-                (Vector2)transform.position +
-                direction * range;
+            Vector2 point = (Vector2)transform.position + direction * range;
 
-            lineRenderer.SetPosition(
-                i + 1,
-                point
-            );
+            lineRenderer.SetPosition(i + 1, point);
         }
 
-        lineRenderer.SetPosition(
-            points + 2,
-            transform.position
-        );
+        lineRenderer.SetPosition(points + 2, transform.position);
     }
 }

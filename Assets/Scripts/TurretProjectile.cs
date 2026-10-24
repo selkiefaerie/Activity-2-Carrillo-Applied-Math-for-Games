@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 public class TurretProjectile : MonoBehaviour
@@ -20,10 +21,8 @@ public class TurretProjectile : MonoBehaviour
 
     void Update()
     {
-        // Move projectile manually
         transform.position += (Vector3)(direction * speed * Time.deltaTime);
 
-        // Find creatures
         CreatureHealth[] creatures = FindObjectsByType<CreatureHealth>(
             FindObjectsSortMode.None
         );
@@ -41,6 +40,28 @@ public class TurretProjectile : MonoBehaviour
             if (distance <= hitDistance)
             {
                 creature.TakeDamage(1);
+                Destroy(gameObject);
+                return;
+            }
+        }
+
+        PathEnemy[] enemies = FindObjectsByType<PathEnemy>(
+            FindObjectsSortMode.None
+        );
+
+        foreach (PathEnemy enemy in enemies)
+        {
+            if (enemy == null)
+                continue;
+
+            float distance = Vector2.Distance(
+                transform.position,
+                enemy.transform.position
+            );
+
+            if (distance <= hitDistance)
+            {
+                enemy.TakeDamage(1);
                 Destroy(gameObject);
                 return;
             }

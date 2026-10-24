@@ -1,19 +1,18 @@
+
 using UnityEngine;
 
 public class ShotgunTurret : TurretBase
 {
-    public LineRenderer lineRenderer;
-
     public GameObject projectilePrefab;
     public Transform firePoint;
 
     public float range = 4f;
-
     public int bulletCount = 5;
     public float spreadAngle = 60f;
+    public float fireRate = 1f;
 
-    private bool creatureWasInRange = false;
-    private CreatureHealth targetCreature;
+    private float fireTimer = 0f;
+    private Transform targetCreature;
 
     void Update()
     {
@@ -24,42 +23,68 @@ public class ShotgunTurret : TurretBase
 
         targetCreature = FindCreatureInRange();
 
-        bool creatureInRange = targetCreature != null;
-
-        if (creatureInRange && !creatureWasInRange)
+        if (targetCreature != null)
         {
-            Shoot();
-        }
+            fireTimer += Time.deltaTime;
 
-        creatureWasInRange = creatureInRange;
+            if (fireTimer >= fireRate)
+            {
+                Shoot();
+                fireTimer = 0f;
+            }
+        }
+        else
+        {
+            fireTimer = fireRate;
+        }
     }
 
-    CreatureHealth FindCreatureInRange()
+    Transform FindCreatureInRange()
     {
-        CreatureHealth[] creatures = FindObjectsByType<CreatureHealth>();
-
-        CreatureHealth closestCreature = null;
+        Transform closestTarget = null;
         float closestDistance = Mathf.Infinity;
+
+        CreatureHealth[] creatures =
+            FindObjectsByType<CreatureHealth>(FindObjectsSortMode.None);
 
         foreach (CreatureHealth creature in creatures)
         {
             if (creature == null)
                 continue;
 
-            float distance =
-                Vector2.Distance(
-                    transform.position,
-                    creature.transform.position
-                );
-
-            if (distance <= range && distance < closestDistance)
-            {
-                closestDistance = distance;
-                closestCreature = creature;
-            }
+            CheckTarget(creature.transform, ref closestTarget, ref closestDistance);
         }
 
-        return closestCreature;
+        PathEnemy[] enemies =
+            FindObjectsByType<PathEnemy>(FindObjectsSortMode.None);
+
+        foreach (PathEnemy enemy in enemies)
+        {
+            if (enemy == null)
+                continue;
+
+            CheckTarget(enemy.transform, ref closestTarget, ref closestDistance);
+        }
+
+        return closestTarget;
+    }
+
+    void CheckTarget(
+        Transform target,
+        ref Transform closestTarget,
+        ref float closestDistance
+    )
+    {
+        float distance = Vector2.Distance(
+            transform.position,
+            target.position
+        );
+
+        if (distance <= range && distance < closestDistance)
+        {
+            closestDistance = distance;
+            closestTarget = target;
+        }
     }
 
     void Shoot()
@@ -71,47 +96,36 @@ public class ShotgunTurret : TurretBase
             return;
 
         Vector2 directionToCreature =
-            targetCreature.transform.position - firePoint.position;
+            targetCreature.position - firePoint.position;
 
         directionToCreature.Normalize();
 
-        float startAngle =
-            -spreadAngle / 2f;
-
-        float angleStep = 0f;
-
-        if (bulletCount > 1)
-        {
-            angleStep =
-                spreadAngle / (bulletCount - 1);
-        }
+        float startAngle = -spreadAngle / 2f;
+        float angleStep = bulletCount > 1
+            ? spreadAngle / (bulletCount - 1)
+            : 0f;
 
         for (int i = 0; i < bulletCount; i++)
         {
-            float angle =
-                startAngle + angleStep * i;
+            float angle = startAngle + angleStep * i;
 
-            Vector2 direction =
-                Quaternion.Euler(
-                    0f,
-                    0f,
-                    angle
-                ) * directionToCreature;
+            Vector2 direction = Quaternion.Euler(
+                0f,
+                0f,
+                angle
+            ) * directionToCreature;
 
-            GameObject projectile =
-                Instantiate(
-                    projectilePrefab,
-                    firePoint.position,
-                    Quaternion.identity
-                );
+            GameObject projectile = Instantiate(
+                projectilePrefab,
+                firePoint.position,
+                Quaternion.identity
+            );
 
             TurretProjectile projectileScript =
                 projectile.GetComponent<TurretProjectile>();
 
             if (projectileScript != null)
-            {
                 projectileScript.Setup(direction);
-            }
         }
     }
 
@@ -121,29 +135,20 @@ public class ShotgunTurret : TurretBase
             return;
 
         int points = 60;
-
-        lineRenderer.positionCount =
-            points + 1;
+        lineRenderer.positionCount = points + 1;
 
         for (int i = 0; i <= points; i++)
         {
-            float angle =
-                (360f / points) * i;
+            float angle = (360f / points) * i;
 
-            Vector2 direction =
-                new Vector2(
-                    Mathf.Cos(angle * Mathf.Deg2Rad),
-                    Mathf.Sin(angle * Mathf.Deg2Rad)
-                );
-
-            Vector2 point =
-                (Vector2)transform.position
-                + direction * range;
-
-            lineRenderer.SetPosition(
-                i,
-                point
+            Vector2 direction = new Vector2(
+                Mathf.Cos(angle * Mathf.Deg2Rad),
+                Mathf.Sin(angle * Mathf.Deg2Rad)
             );
+
+            Vector2 point = (Vector2)transform.position + direction * range;
+
+            lineRenderer.SetPosition(i, point);
         }
     }
 }
